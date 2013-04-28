@@ -1,0 +1,40 @@
+(ns github-contributions.github
+  (:require [tentacles.repos :refer [user-repos contributors specific-repo]]
+            [io.pedestal.service.log :as log]))
+
+
+(defn gh-auth
+  []
+  {:auth (or (System/getenv "GITHUB_AUTH")
+             (throw (ex-info "Set $GITHUB_AUTH to basic auth in order to use github api." {})))})
+
+(defn fetch-repos [user]
+  (user-repos user (assoc (gh-auth) :all-pages true)))
+
+(defn fetch-fork-info [user repo]
+  (log/info :msg (format "Fetching fork info for %s/%s" user repo))
+  (let [repo-map (specific-repo user repo)
+        ;; TODO: why not full_name?
+        full-name (get-in repo-map [:parent :full_name])
+        [_ parent-user parent-repo] (re-find #"([^/]+)/([^/]+)" full-name)
+        contribs (contributors parent-user parent-repo)
+        commits (some #(and (= user (:login %)) (:contributions %)) contribs)]
+    {:full_name full-name :commits (or commits "N/A")}))
+
+(defn fetch-contributions [send-event-fn sse-context user]
+  (if user
+    ;; TODO: remove limit
+    (let [repos (take 20 (fetch-repos user))
+          forked (filter :fork repos)
+          message-event (partial send-event-fn sse-context "message")]
+      (message-event
+       (format "Found %s repositories, %s forked repositories: %s"
+               (count repos) (count forked) (pr-str (mapv :name forked))))
+      (doseq [fork forked]
+        (let [_ (prn "FORK:" fork)
+              fork-map (fetch-fork-info user (:name fork))]
+          (message-event
+           (format "Fork: %s, Commits: %s"
+                   (:full_name fork-map)
+                   (:commits fork-map))))))
+    (log/error :msg "No user given to fetch contributions. Ignored.")))

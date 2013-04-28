@@ -6,8 +6,8 @@
               [io.pedestal.service.http.sse :as sse]
               [io.pedestal.service.log :as log]
               [com.github.ragnard.hamelito.hiccup :as haml]
-              [tentacles.repos :refer [user-repos contributors]]
               [clojure.java.io :as io]
+              [github-contributions.github :refer [fetch-contributions]]
               [ring.util.response :as ring-resp]))
 
 (defn home-page
@@ -26,22 +26,6 @@
     (future (send-counter ctx (dec count)))
     (sse/end-event-stream ctx)))
 
-(defn gh-auth
-  []
-  {:auth (or (System/getenv "GITHUB_AUTH")
-             (throw (ex-info "Set $GITHUB_AUTH to basic auth in order to use github api." {})))})
-
-(defn fetch-repos [user]
-  (user-repos user (assoc (gh-auth) :all-pages true)))
-
-(defn fetch-contributions [sse-context user]
-  (if user
-    (let [repos (fetch-repos user)
-          forked (filter :fork repos)]
-      (sse/send-event sse-context "message" (format "Found %s repositories, %s forked repositories: %s"
-                                                    (count repos) (count forked) (pr-str (mapv :name forked)))))
-    (log/error :msg "No user given to fetch contributions. Ignored.")))
-
 (def ^{:doc "Map of IDs to SSE contexts"} subscribers (atom {}))
 
 (defn contributions-page
@@ -54,8 +38,7 @@
 (defn update-contributions [request]
   (if-let [id (get-in request [:form-params "id"])]
     (if-let [sse-context (get @subscribers id)]
-      (fetch-contributions sse-context (get-in request [:form-params "user"]))
-      #_(send-counter sse-context 10)
+      (fetch-contributions sse/send-event sse-context (get-in request [:form-params "user"]))
       (log/error :msg (str "No sse context for id " id)))
     (log/error :msg "No id passed to update contributions. Ignored.")))
 
