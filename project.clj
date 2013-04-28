@@ -12,6 +12,7 @@
                  ;; [io.pedestal/pedestal.tomcat "0.1.5"]
 
                  [com.github.ragnard/hamelito "0.2.1"]
+                 [tentacles "0.2.5"]
 
                  ;; Logging
                  [ch.qos.logback/logback-classic "1.0.7"]
