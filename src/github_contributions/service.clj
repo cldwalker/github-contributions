@@ -4,6 +4,7 @@
               [io.pedestal.service.http.body-params :as body-params]
               [io.pedestal.service.http.route.definition :refer [defroutes]]
               [io.pedestal.service.http.sse :as sse]
+              [io.pedestal.service.log :as log]
               [com.github.ragnard.hamelito.hiccup :as haml]
               [clojure.java.io :as io]
               [ring.util.response :as ring-resp]))
@@ -24,16 +25,28 @@
     (future (send-counter ctx (dec count)))
     (sse/end-event-stream ctx)))
 
+(def ^{:doc "Map of IDs to SSE contexts"} subscribers (atom {}))
+
 (defn contributions-page
   "Starts sending counter events to client."
-  [ctx]
-  (send-counter ctx 10))
+  [sse-context]
+  (if-let [id (get-in sse-context [:request :query-params :id])]
+    (swap! subscribers assoc id sse-context)
+    (log/error :msg "No id passed to /contributions. Ignored.")))
+
+(defn update-contributions [request]
+  (if-let [id (get-in request [:form-params "id"])]
+    (if-let [sse-context (get @subscribers id)]
+      (send-counter sse-context 10)
+      (log/error :msg (str "No sse context for id " id)))
+    (log/error :msg "No id passed to update contributions. Ignored.")))
 
 (defroutes routes
   [[["/" {:get home-page}
      ;; Set default interceptors for /about and any other paths under /
      ^:interceptors [(body-params/body-params) bootstrap/html-body]
-     ["/contributions" {:get [::contributions (sse/start-event-stream contributions-page)]}]]]])
+     ["/contributions" {:get [::contributions (sse/start-event-stream contributions-page)]
+                        :post update-contributions}]]]])
 
 ;; You can use this fn or a per-request fn via io.pedestal.service.http.route/url-for
 (def url-for (route/url-for-routes routes))

@@ -4,14 +4,12 @@
     %title Contributions on Github
     %meta(charset='utf-8')
     %script(src='http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js')
-    :javascript
-      var es = new EventSource('/contributions');
-      es.onmessage = function(e) { $('#results').append(e.data + "\n") };
   %body
     %h1 Contributions on Github
-    %form(action='/contributions')
+    %form
       %label(for='user')
         Github User:
-      %input(name='user')
+      %input(name='user' id='user')
       %input(type='submit')
+    %script(src='/js/app.js')
     %pre#results
