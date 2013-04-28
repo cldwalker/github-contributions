@@ -1,6 +1,6 @@
 # github-contributions
 
-FIXME
+WIP
 
 ## Getting Started
 
