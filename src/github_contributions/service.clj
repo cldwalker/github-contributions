@@ -3,24 +3,37 @@
               [io.pedestal.service.http.route :as route]
               [io.pedestal.service.http.body-params :as body-params]
               [io.pedestal.service.http.route.definition :refer [defroutes]]
+              [io.pedestal.service.http.sse :as sse]
               [com.github.ragnard.hamelito.hiccup :as haml]
               [clojure.java.io :as io]
               [ring.util.response :as ring-resp]))
-
-(defn about-page
-  [request]
-  (ring-resp/response (format "Clojure %s" (clojure-version))))
 
 (defn home-page
   [request]
   (ring-resp/response
    (haml/html (slurp (io/resource "public/index.haml")))))
 
+(defn send-counter
+  "Counts down to 0, sending value of counter to sse context and
+  recursing on a different thread; ends event stream when counter
+  is 0."
+  [ctx count]
+  (sse/send-event ctx "message" (str count ", thread: " (.getId (Thread/currentThread))))
+  (Thread/sleep 2000)
+  (if (> count 0)
+    (future (send-counter ctx (dec count)))
+    (sse/end-event-stream ctx)))
+
+(defn contributions-page
+  "Starts sending counter events to client."
+  [ctx]
+  (send-counter ctx 10))
+
 (defroutes routes
   [[["/" {:get home-page}
      ;; Set default interceptors for /about and any other paths under /
      ^:interceptors [(body-params/body-params) bootstrap/html-body]
-     ["/about" {:get about-page}]]]])
+     ["/contributions" {:get [::contributions (sse/start-event-stream contributions-page)]}]]]])
 
 ;; You can use this fn or a per-request fn via io.pedestal.service.http.route/url-for
 (def url-for (route/url-for-routes routes))
