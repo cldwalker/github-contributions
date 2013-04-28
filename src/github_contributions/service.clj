@@ -3,6 +3,8 @@
               [io.pedestal.service.http.route :as route]
               [io.pedestal.service.http.body-params :as body-params]
               [io.pedestal.service.http.route.definition :refer [defroutes]]
+              [com.github.ragnard.hamelito.hiccup :as haml]
+              [clojure.java.io :as io]
               [ring.util.response :as ring-resp]))
 
 (defn about-page
@@ -11,7 +13,8 @@
 
 (defn home-page
   [request]
-  (ring-resp/response "Hello World!"))
+  (ring-resp/response
+   (haml/html (slurp (io/resource "public/index.haml")))))
 
 (defroutes routes
   [[["/" {:get home-page}

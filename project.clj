@@ -11,6 +11,8 @@
                  [io.pedestal/pedestal.jetty "0.1.5"]
                  ;; [io.pedestal/pedestal.tomcat "0.1.5"]
 
+                 [com.github.ragnard/hamelito "0.2.1"]
+
                  ;; Logging
                  [ch.qos.logback/logback-classic "1.0.7"]
                  [org.slf4j/jul-to-slf4j "1.7.2"]
