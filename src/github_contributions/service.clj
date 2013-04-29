@@ -7,24 +7,13 @@
               [io.pedestal.service.log :as log]
               [com.github.ragnard.hamelito.hiccup :as haml]
               [clojure.java.io :as io]
-              [github-contributions.github :refer [fetch-contributions get-in!]]
+              [github-contributions.github :refer [stream-contributions get-in!]]
               [ring.util.response :as ring-resp]))
 
 (defn home-page
   [request]
   (ring-resp/response
    (haml/html (slurp (io/resource "public/index.haml")))))
-
-(defn send-counter
-  "Counts down to 0, sending value of counter to sse context and
-  recursing on a different thread; ends event stream when counter
-  is 0."
-  [ctx count]
-  (sse/send-event ctx "message" (str count ", thread: " (.getId (Thread/currentThread))))
-  (Thread/sleep 2000)
-  (if (> count 0)
-    (future (send-counter ctx (dec count)))
-    (sse/end-event-stream ctx)))
 
 (def ^{:doc "Map of IDs to SSE contexts"} subscribers (atom {}))
 
@@ -38,7 +27,7 @@
 (defn update-contributions [request]
   (if-let [id (get-in request [:form-params "id"])]
     (if-let [sse-context (get @subscribers id)]
-      (fetch-contributions sse/send-event sse-context (get-in! request [:form-params "user"]))
+      (stream-contributions sse/send-event sse-context (get-in! request [:form-params "user"]))
       (log/error :msg (str "No sse context for id " id)))
     (log/error :msg "No id passed to update contributions. Ignored.")))
 

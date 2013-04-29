@@ -2,7 +2,7 @@
   (:require [tentacles.repos :refer [user-repos contributors specific-repo]]
             [io.pedestal.service.log :as log]))
 
-
+;;; helpers
 (defn gh-auth
   []
   {:auth (or (System/getenv "GITHUB_AUTH")
@@ -18,6 +18,7 @@
   [m k]
   (or (get m k) (throw (ex-info "No value found for key in map" {:map m :key k}))))
 
+;;; api calls
 (defn fetch-repos [user]
   (user-repos user (assoc (gh-auth) :all-pages true)))
 
@@ -30,7 +31,7 @@
         commits (some #(and (= user (:login %)) (:contributions %)) contribs)]
     {:full_name full-name :commits (or commits "-")}))
 
-(defn fetch-contributions [send-event-fn sse-context user]
+(defn stream-contributions [send-event-fn sse-context user]
   (if user
     ;; TODO: remove limit
     (let [repos (take 20 (fetch-repos user))
