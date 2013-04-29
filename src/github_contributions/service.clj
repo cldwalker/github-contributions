@@ -7,7 +7,7 @@
               [io.pedestal.service.log :as log]
               [com.github.ragnard.hamelito.hiccup :as haml]
               [clojure.java.io :as io]
-              [github-contributions.github :refer [fetch-contributions]]
+              [github-contributions.github :refer [fetch-contributions get-in!]]
               [ring.util.response :as ring-resp]))
 
 (defn home-page
@@ -38,7 +38,7 @@
 (defn update-contributions [request]
   (if-let [id (get-in request [:form-params "id"])]
     (if-let [sse-context (get @subscribers id)]
-      (fetch-contributions sse/send-event sse-context (get-in request [:form-params "user"]))
+      (fetch-contributions sse/send-event sse-context (get-in! request [:form-params "user"]))
       (log/error :msg (str "No sse context for id " id)))
     (log/error :msg "No id passed to update contributions. Ignored.")))
 
