@@ -31,6 +31,8 @@
         commits (some #(and (= user (:login %)) (:contributions %)) contribs)]
     {:full_name full-name :commits (or commits "-")}))
 
+(def memoized-fetch-fork-info (memoize fetch-fork-info))
+
 (defn stream-contributions [send-event-fn sse-context user]
   (if user
     ;; TODO: remove limit
@@ -41,7 +43,7 @@
        (format "Found %s repositories, %s forked repositories: %s"
                (count repos) (count forked) (pr-str (mapv :name forked))))
       (doseq [fork forked]
-        (let [fork-map (fetch-fork-info user (get! fork :name))]
+        (let [fork-map (memoized-fetch-fork-info user (get! fork :name))]
           (message-event
            (format "Fork: %s, Commits: %s"
                    (:full_name fork-map)
