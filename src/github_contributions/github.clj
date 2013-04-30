@@ -24,12 +24,19 @@
 (defn fetch-repos [user]
   (user-repos user (assoc (gh-auth) :all-pages true)))
 
+;;; get around tentacles bug
+(defn fetch-contributors [user repo]
+  (let [cs (contributors user repo (gh-auth))]
+    (if (= (last cs) {})
+      (vec (drop-last 1 cs))
+      cs)))
+
 (defn fetch-fork-info [user repo]
   (log/info :msg (format "Fetching fork info for %s/%s" user repo))
   (let [repo-map (specific-repo user repo (gh-auth))
         full-name (get-in! repo-map [:parent :full_name])
         [_ parent-user parent-repo] (re-find #"([^/]+)/([^/]+)" full-name)
-        contribs (->> (contributors parent-user parent-repo (gh-auth))
+        contribs (->> (fetch-contributors parent-user parent-repo)
                       (sort-by :contributions)
                       reverse
                       (map-indexed (fn [num elem] (assoc elem :num num))))
