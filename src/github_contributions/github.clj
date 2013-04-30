@@ -44,6 +44,25 @@
 
 (def memoized-fetch-fork-info (memoize fetch-fork-info))
 
+(defn- rank-ending [num]
+  (cond
+   (and (= \3 (last num)) (not= '(\1 \3) (take-last 2 num))) "rd"
+   (and (= \2 (last num)) (not= '(\1 \2) (take-last 2 num))) "nd"
+   (and (= \1 (last num)) (not= '(\1 \1) (take-last 2 num))) "st"
+   :else "th"))
+
+(defn- render-row [fork-map]
+  (haml/html
+   (clostache/render-resource
+    "public/row.haml"
+    (assoc fork-map
+      :ranking (if (:contributor-rank fork-map)
+                 (format "%s%s of %s"
+                         (:contributor-rank fork-map)
+                         (rank-ending (str (:contributor-rank fork-map)))
+                         (:total-contributors fork-map))
+                 "-")))))
+
 (defn stream-contributions [send-event-fn sse-context user]
   (if user
     ;; TODO: remove limit
@@ -55,12 +74,5 @@
                (count repos) (count forked) (pr-str (mapv :name forked))))
       (doseq [fork forked]
         (let [fork-map (memoized-fetch-fork-info user (get! fork :name))]
-          (message-event
-           (haml/html
-            (clostache/render-resource
-             "public/row.haml"
-             (assoc fork-map
-               :ranking (if (:contributor-rank fork-map)
-                          (format "%s out of %s" (:contributor-rank fork-map) (:total-contributors fork-map))
-                          "-"))))))))
+          (message-event (render-row fork-map)))))
     (log/error :msg "No user given to fetch contributions. Ignored.")))
