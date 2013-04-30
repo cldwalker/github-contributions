@@ -1,0 +1,19 @@
+tr.contribution td {
+  background-color: #dff0d8;
+}
+
+tr.no-contribution td {
+  background-color: #f2dede;
+}
+
+label.user {
+  font-size: 30px;
+}
+label.user span {
+  font-size: 20px;
+  color: #999;
+}
+
+#user {
+  margin-right: 5px;
+}

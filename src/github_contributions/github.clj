@@ -44,6 +44,7 @@
     {:full-name full-name
      :user user
      :commits (or (:contributions contributor) 0)
+     :tr-class (if (:contributions contributor) "contribution" "no-contribution")
      :total-contributors (count contribs)
      :contributor-rank (when contributor (inc (:num contributor)))
      :stars (get-in repo-map [:parent :watchers_count])

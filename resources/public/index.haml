@@ -7,14 +7,15 @@
     %script(src='http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js')
     %link(rel='stylesheet' href='css/normalize.css')
     %link(rel='stylesheet' href='css/foundation.min.css')
+    %link(rel='stylesheet' href='css/app.css')
   %body
     .row
       %h1 Contributions on Github
     .row
       %form
-        %label(for='user' style='font-size: 30px')
+        %label(for='user' class='user')
           Github user&nbsp;
-          %span(style='font-size: 20px; color: #999') (Example:&nbsp;
+          %span (Example:&nbsp;
             %a(href='#TODO') cldwalker
             )
         %input(name='user' id='user')
