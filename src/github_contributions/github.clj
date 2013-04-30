@@ -27,9 +27,17 @@
   (let [repo-map (specific-repo user repo (gh-auth))
         full-name (get-in! repo-map [:parent :full_name])
         [_ parent-user parent-repo] (re-find #"([^/]+)/([^/]+)" full-name)
-        contribs (contributors parent-user parent-repo (gh-auth))
-        commits (some #(and (= user (:login %)) (:contributions %)) contribs)]
-    {:full_name full-name :commits (or commits "-")}))
+        contribs (->> (contributors parent-user parent-repo (gh-auth))
+                      (sort-by :contributions)
+                      reverse
+                      (map-indexed (fn [num elem] (assoc elem :num num))))
+        contributor (some #(and (= user (:login %)) %) contribs)]
+    {:full_name full-name
+     :commits (:contributions contributor)
+     :total-contributors (count contribs)
+     :contributor-rank (when contributor (inc (:num contributor)))
+     :watchers (get-in repo-map [:parent :watchers_count])
+     :desc (get-in repo-map [:parent :description])}))
 
 (def memoized-fetch-fork-info (memoize fetch-fork-info))
 
@@ -45,7 +53,8 @@
       (doseq [fork forked]
         (let [fork-map (memoized-fetch-fork-info user (get! fork :name))]
           (message-event
-           (format "Fork: %s, Commits: %s"
+           (pr-str fork-map)
+           #_(format "Fork: %s, Commits: %s"
                    (:full_name fork-map)
                    (:commits fork-map))))))
     (log/error :msg "No user given to fetch contributions. Ignored.")))
