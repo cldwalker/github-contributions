@@ -13,6 +13,7 @@
 
                  [com.github.ragnard/hamelito "0.2.1"]
                  [tentacles "0.2.5"]
+                 [de.ubercode.clostache/clostache "1.3.1"]
 
                  ;; Logging
                  [ch.qos.logback/logback-classic "1.0.7"]

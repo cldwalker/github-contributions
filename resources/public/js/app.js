@@ -19,6 +19,6 @@ es.onmessage = function(e) { $('#results').append(e.data + "\n") };
 $("form").on('submit', function(e) {
   $.post('/contributions', {id: clientId, user: $("#user").val()});
   $('#user').val('');
-  $('#results').html('');
+  $('tbody').html('');
   e.preventDefault();
 });

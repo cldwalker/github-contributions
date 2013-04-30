@@ -1,6 +1,8 @@
 (ns github-contributions.github
   (:require [tentacles.repos :refer [user-repos contributors specific-repo]]
-            [io.pedestal.service.log :as log]))
+            [io.pedestal.service.log :as log]
+            [com.github.ragnard.hamelito.hiccup :as haml]
+            [clostache.parser :as clostache]))
 
 ;;; helpers
 (defn gh-auth
@@ -32,11 +34,12 @@
                       reverse
                       (map-indexed (fn [num elem] (assoc elem :num num))))
         contributor (some #(and (= user (:login %)) %) contribs)]
-    {:full_name full-name
-     :commits (:contributions contributor)
+    {:full-name full-name
+     :user user
+     :commits (or (:contributions contributor) 0)
      :total-contributors (count contribs)
      :contributor-rank (when contributor (inc (:num contributor)))
-     :watchers (get-in repo-map [:parent :watchers_count])
+     :stars (get-in repo-map [:parent :watchers_count])
      :desc (get-in repo-map [:parent :description])}))
 
 (def memoized-fetch-fork-info (memoize fetch-fork-info))
@@ -47,14 +50,17 @@
     (let [repos (take 20 (fetch-repos user))
           forked (filter :fork repos)
           message-event (partial send-event-fn sse-context "message")]
-      (message-event
+      (log/info :msg
        (format "Found %s repositories, %s forked repositories: %s"
                (count repos) (count forked) (pr-str (mapv :name forked))))
       (doseq [fork forked]
         (let [fork-map (memoized-fetch-fork-info user (get! fork :name))]
           (message-event
-           (pr-str fork-map)
-           #_(format "Fork: %s, Commits: %s"
-                   (:full_name fork-map)
-                   (:commits fork-map))))))
+           (haml/html
+            (clostache/render-resource
+             "public/row.haml"
+             (assoc fork-map
+               :ranking (if (:contributor-rank fork-map)
+                          (format "%s out of %s" (:contributor-rank fork-map) (:total-contributors fork-map))
+                          "-"))))))))
     (log/error :msg "No user given to fetch contributions. Ignored.")))
