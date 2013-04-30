@@ -14,10 +14,23 @@ function guid() {
 
 var clientId = guid();
 var es = new EventSource('/contributions?id='+clientId);
-es.onmessage = function(e) { $('#results').append(e.data + "\n") };
+// yeah BEGIN, END is gross but json is overkill here
+es.onmessage = function(e) {
+  var match;
+  if (match = e.data.match(/^:BEGIN:\s*(.*)/)) {
+    $("#message").html(match[1]);
+  }
+  else if (e.data.substring(0,5) == ':END:') {
+    $('#message').html("DONE!");
+  }
+  else {
+    $('#results').append(e.data + "\n");
+  }
+ };
 
 $("form").on('submit', function(e) {
   $.post('/contributions', {id: clientId, user: $("#user").val()});
+  $('#message').html('Fetching data...');
   $('#user').val('');
   $('tbody').html('');
   e.preventDefault();

@@ -63,16 +63,20 @@
                          (:total-contributors fork-map))
                  "-")))))
 
+(def ^{:doc "Marks beginning of a contributions stream"} begin-mark ":BEGIN:")
+(def ^{:doc "Marks end of a contributions stream"} end-mark ":END:")
+
 (defn stream-contributions [send-event-fn sse-context user]
   (if user
     ;; TODO: remove limit
     (let [repos (take 20 (fetch-repos user))
           forked (filter :fork repos)
           message-event (partial send-event-fn sse-context "message")]
-      (log/info :msg
-       (format "Found %s repositories, %s forked repositories: %s"
-               (count repos) (count forked) (pr-str (mapv :name forked))))
+      (message-event
+       (format "%s Fetching data for %s forked repositories: %s"
+               begin-mark (count forked) (pr-str (mapv :name forked))))
       (doseq [fork forked]
         (let [fork-map (memoized-fetch-fork-info user (get! fork :name))]
-          (message-event (render-row fork-map)))))
+          (message-event (render-row fork-map))))
+      (message-event end-mark))
     (log/error :msg "No user given to fetch contributions. Ignored.")))
