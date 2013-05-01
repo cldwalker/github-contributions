@@ -72,21 +72,17 @@
                  "-")
       :ranking-class (if-not (:contributor-rank fork-map) "hide" "")))))
 
-(def ^{:doc "Beginning message of a contributions stream"} begin-msg ":BEGIN:")
-(def ^{:doc "Ending message of a contributions stream"} end-msg ":END:")
-
 (defn- render-end-msg [user forks]
   (format
-   "%s <a href=\"https://github.com/%s\">%s</a> has contributed to %s of %s forks."
-   end-msg
+   "<a href=\"https://github.com/%s\">%s</a> has contributed to %s of %s forks."
    user
    user
    (count (filter #(pos? (:commits %)) forks))
    (count forks)))
 
-(defn- fetch-fork-info-and-send-msg [message-event user fork]
+(defn- fetch-fork-and-send-row [send-to user fork]
   (let [fork-map (memoized-fetch-fork-info user (get! fork :name))]
-    (message-event (render-row fork-map))
+    (send-to "results" (render-row fork-map))
     fork-map))
 
 (defn stream-contributions [send-event-fn sse-context user]
@@ -94,12 +90,12 @@
     ;; TODO: remove limit
     (let [repos (take 20 (fetch-repos user))
           forked-repos (filter :fork repos)
-          message-event (partial send-event-fn sse-context "message")]
-      (message-event
-       (format "%s %s has %s forks. Fetching data..."
-               begin-msg user (count forked-repos)))
+          send-to (partial send-event-fn sse-context)]
+      (send-to "message"
+       (format "%s has %s forks. Fetching data..."
+               user (count forked-repos)))
       (->> forked-repos
-           (mapv (partial fetch-fork-info-and-send-msg message-event user))
+           (mapv (partial fetch-fork-and-send-row send-to user))
            (render-end-msg user)
-           message-event))
+           (send-to "message")))
     (log/error :msg "No user given to fetch contributions. Ignored.")))
