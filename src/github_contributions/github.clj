@@ -51,6 +51,7 @@
      :desc (get-in repo-map [:parent :description])}))
 
 (def memoized-fetch-fork-info (memoize fetch-fork-info))
+(def memoized-fetch-repos (memoize fetch-repos))
 
 (defn- rank-ending [num]
   (cond
@@ -88,7 +89,7 @@
 (defn stream-contributions [send-event-fn sse-context user]
   (if user
     ;; TODO: remove limit
-    (let [repos (take 20 (fetch-repos user))
+    (let [repos (take 20 (memoized-fetch-repos user))
           forked-repos (filter :fork repos)
           send-to (partial send-event-fn sse-context)]
       (send-to "message"
