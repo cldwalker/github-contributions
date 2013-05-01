@@ -1,9 +1,9 @@
 %tr(class='{{tr-class}}')
   %td
     %a(href='https://github.com/{{full-name}}') {{full-name}}
-    &nbsp; ({{stars}} stars)
+    %span.stars &nbsp;({{stars}} stars)
   %td
     %a(href='https://github.com/{{full-name}}/commits?author={{user}}') {{commits}} commits
   %td
-    %a(href='https://github.com/{{full-name}}/contributors') {{ranking}}
+    %a(class='ranking {{ranking-class}}' href='https://github.com/{{full-name}}/contributors') {{ranking}}
   %td {{desc}}

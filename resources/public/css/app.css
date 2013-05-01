@@ -17,3 +17,7 @@ label.user span {
 #user {
   margin-right: 5px;
 }
+
+span.stars {
+  font-size: 90%;
+}

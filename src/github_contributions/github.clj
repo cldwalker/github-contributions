@@ -69,7 +69,8 @@
                          (:contributor-rank fork-map)
                          (rank-ending (str (:contributor-rank fork-map)))
                          (:total-contributors fork-map))
-                 "-")))))
+                 "-")
+      :ranking-class (if-not (:contributor-rank fork-map) "hide" "")))))
 
 (def ^{:doc "Marks beginning of a contributions stream"} begin-mark ":BEGIN:")
 (def ^{:doc "Marks end of a contributions stream"} end-mark ":END:")
