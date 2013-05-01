@@ -1,9 +1,9 @@
 tr.contribution td {
-  background-color: #dff0d8;
+  background-color: #f9f9f9;
 }
 
 tr.no-contribution td {
-  background-color: #f2dede;
+  background-color: #fff;
 }
 
 label.user {
