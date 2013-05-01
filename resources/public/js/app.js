@@ -23,6 +23,7 @@ es.onmessage = function(e) {
 
 $("form").on('submit', function(e) {
   $.post('/contributions', {id: clientId, user: $("#user").val()});
+  $('#results').show();
   $('#message').show();
   $('#message').html('Fetching repositories...');
   $('#user').val('');
