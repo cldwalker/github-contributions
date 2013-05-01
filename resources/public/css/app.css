@@ -21,3 +21,7 @@ label.user span {
 span.stars {
   font-size: 90%;
 }
+
+#message {
+  display: none;
+}
