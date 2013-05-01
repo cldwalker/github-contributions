@@ -20,8 +20,8 @@ es.onmessage = function(e) {
   if (match = e.data.match(/^:BEGIN:\s*(.*)/)) {
     $("#message").html(match[1]);
   }
-  else if (e.data.substring(0,5) == ':END:') {
-    $('#message').html("DONE!");
+  else if (match = e.data.match(/^:END:\s*(.*)/)) {
+    $('#message').html(match[1]);
   }
   else {
     $('#results').append(e.data + "\n");
@@ -30,7 +30,7 @@ es.onmessage = function(e) {
 
 $("form").on('submit', function(e) {
   $.post('/contributions', {id: clientId, user: $("#user").val()});
-  $('#message').html('Fetching data...');
+  $('#message').html('Fetching repositories...');
   $('#user').val('');
   $('tbody').html('');
   e.preventDefault();
