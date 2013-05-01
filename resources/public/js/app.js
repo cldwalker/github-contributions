@@ -20,7 +20,12 @@ es.addEventListener('results', function(e) {
 es.onmessage = function(e) {
   $('#message').html(e.data + "\n");
 };
+es.onerror = function(e) {
+  $('.alert-box').show();
+  $('#error').html(e.data);
+};
 
+$(function() {
 $("form").on('submit', function(e) {
   $.post('/contributions', {id: clientId, user: $("#user").val()});
   $('#results').show();
@@ -29,4 +34,8 @@ $("form").on('submit', function(e) {
   $('#user').val('');
   $('tbody').html('');
   e.preventDefault();
+});
+
+  // close alert box
+  $('a.close').on('click', function(e) { $(e.target).parent().hide() });
 });

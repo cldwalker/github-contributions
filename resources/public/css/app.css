@@ -22,6 +22,6 @@ span.stars {
   font-size: 90%;
 }
 
-#message, #results {
+#message, #results, .alert-box {
   display: none;
 }
