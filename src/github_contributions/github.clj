@@ -116,6 +116,7 @@
   (if user
     (try
       (stream-contributions* send-event-fn sse-context user)
+      {:status 200}
       (catch clojure.lang.ExceptionInfo exception
         (log/error :msg (str "40X response from Github: " (pr-str (ex-data exception))))
         (send-event-fn sse-context "error"
