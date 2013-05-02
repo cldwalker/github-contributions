@@ -32,11 +32,12 @@
     (log/error :msg "No id passed to update contributions. Ignored.")))
 
 (defroutes routes
-  [[["/" {:get home-page}
+  [[["/"
      ;; Set default interceptors for /about and any other paths under /
      ^:interceptors [(body-params/body-params) bootstrap/html-body]
      ["/contributions" {:get [::contributions (sse/start-event-stream contributions-page)]
-                        :post update-contributions}]]]])
+                        :post update-contributions}]
+     ["/*user" {:get home-page}]]]])
 
 ;; You can use this fn or a per-request fn via io.pedestal.service.http.route/url-for
 (def url-for (route/url-for-routes routes))

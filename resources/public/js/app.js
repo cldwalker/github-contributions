@@ -33,27 +33,41 @@ es.onerror = function(e) {
 
 $(function() {
   window.addEventListener("popstate", function(e) {
-    console.log("POP");
-    console.log(e);
+    console.log("POP", e.state);
     // guard against initial page load
     if (e.state) {
       $("#message").html(e.state.message);
       $("#results").html(e.state.results);
     }
   });
-  window.history.pushState({"message": '', "results": ''}, null, '');
 
-
-  $("form").on('submit', function(e) {
-    $.post('/contributions', {id: clientId, user: $("#user").val()});
+  var fetchUserContributions = function(user) {
+    $.post('/contributions', {id: clientId, user: user});
     $('#results').show();
     $('#message').show();
     $('#message').html('Fetching repositories...');
     $('#user').val('');
     $('tbody').html('');
+  };
+
+  $("form").on('submit', function(e) {
+    fetchUserContributions($("#user").val());
     e.preventDefault();
   });
 
   // close alert box
   $('a.close').on('click', function(e) { $(e.target).parent().hide() });
+
+  $('a.user').on('click', function(e) {
+    fetchUserContributions(e.target.text);
+    e.preventDefault;
+  });
+
+  var match;
+  if (match = location.pathname.match(/^\/(.+)/)) {
+    fetchUserContributions(match[1]);
+  } else {
+    console.log('PUSH: /');
+    window.history.pushState({"message": '', "results": ''}, null, '');
+  }
 });
