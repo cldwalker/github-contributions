@@ -21,19 +21,29 @@
   (or (get m k) (throw (ex-info "No value found for key in map" {:map m :key k}))))
 
 ;;; api calls
+(defn- github-api-call [f & args]
+  (let [response (apply f args)]
+    (if (some #{403 404} [(:status response)])
+      (throw (ex-info
+              (if (= 403 (:status response))
+                "Rate limit has been exceeded for Github's API. Please try again later."
+                (format "Received a %s from Github. Please try again later." (:status response)))
+              {:reason :github-client-error :response response}))
+      response)))
+
 (defn fetch-repos [user]
-  (user-repos user (assoc (gh-auth) :all-pages true)))
+  (github-api-call user-repos user (assoc (gh-auth) :all-pages true)))
 
 ;;; get around tentacles bug
 (defn fetch-contributors [user repo]
-  (let [cs (contributors user repo (gh-auth))]
+  (let [cs (github-api-call contributors user repo (gh-auth))]
     (if (= (last cs) {})
       (vec (drop-last 1 cs))
       cs)))
 
 (defn fetch-fork-info [user repo]
   (log/info :msg (format "Fetching fork info for %s/%s" user repo))
-  (let [repo-map (specific-repo user repo (gh-auth))
+  (let [repo-map (github-api-call specific-repo user repo (gh-auth))
         full-name (get-in! repo-map [:parent :full_name])
         [_ parent-user parent-repo] (re-find #"([^/]+)/([^/]+)" full-name)
         contribs (->> (fetch-contributors parent-user parent-repo)
@@ -86,17 +96,27 @@
     (send-to "results" (render-row fork-map))
     fork-map))
 
+(defn- stream-contributions* [send-event-fn sse-context user]
+  ;; TODO: remove limit
+  (let [repos (take 20 (memoized-fetch-repos user))
+        forked-repos (filter :fork repos)
+        send-to (partial send-event-fn sse-context)]
+    (send-to "message"
+             (format "%s has %s forks. Fetching data..."
+                     user (count forked-repos)))
+    (->> forked-repos
+         (mapv (partial fetch-fork-and-send-row send-to user))
+         (render-end-msg user)
+         (send-to "message"))))
+
 (defn stream-contributions [send-event-fn sse-context user]
   (if user
-    ;; TODO: remove limit
-    (let [repos (take 20 (memoized-fetch-repos user))
-          forked-repos (filter :fork repos)
-          send-to (partial send-event-fn sse-context)]
-      (send-to "message"
-       (format "%s has %s forks. Fetching data..."
-               user (count forked-repos)))
-      (->> forked-repos
-           (mapv (partial fetch-fork-and-send-row send-to user))
-           (render-end-msg user)
-           (send-to "message")))
+    (try
+      (stream-contributions* send-event-fn sse-context user)
+      (catch clojure.lang.ExceptionInfo exception
+        (log/error :msg (str "40X response from Github: " (pr-str (ex-data exception))))
+        (send-event-fn sse-context "error"
+                       (if (= :github-client-error (:reason (ex-data exception)))
+                         (.getMessage exception)
+                         "An unexpected error occurred while contacting Github. Please try again later."))))
     (log/error :msg "No user given to fetch contributions. Ignored.")))
