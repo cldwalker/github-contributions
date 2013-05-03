@@ -24,19 +24,30 @@
     (swap! subscribers assoc id sse-context)
     (log/error :msg "No id passed to /contributions. Ignored.")))
 
-(defn update-contributions [request]
+(defn- get-sse-context
+  "If sse-context doesn't exist yet, sleep and try again. This was needed for safari and
+opening a user url in a new tab."
+  [id]
+  (if-let [sse-context (get @subscribers id)]
+    sse-context
+    (do
+      (log/info :msg "Waiting 500ms for sse-context to start.")
+      (Thread/sleep 500)
+      (get @subscribers id))))
+
+(defn stream-contributions-page [request]
   (if-let [id (get-in request [:form-params "id"])]
-    (if-let [sse-context (get @subscribers id)]
+    (if-let [sse-context (get-sse-context id)]
       (stream-contributions sse/send-event sse-context (get-in! request [:form-params "user"]))
       (log/error :msg (str "No sse context for id " id)))
-    (log/error :msg "No id passed to update contributions. Ignored.")))
+    (log/error :msg "No id passed to stream contributions. Ignored.")))
 
 (defroutes routes
   [[["/"
      ;; Set default interceptors for /about and any other paths under /
      ^:interceptors [(body-params/body-params) bootstrap/html-body]
      ["/contributions" {:get [::contributions (sse/start-event-stream contributions-page)]
-                        :post update-contributions}]
+                        :post stream-contributions-page}]
      ["/*user" {:get home-page}]]]])
 
 ;; You can use this fn or a per-request fn via io.pedestal.service.http.route/url-for
