@@ -98,15 +98,13 @@
 
 (defn- stream-contributions* [send-event-fn sse-context user]
   ;; TODO: remove limit
-  (let [repos [] #_(take 20 (memoized-fetch-repos user))
-        forked-repos [] #_(filter :fork repos)
+  (let [repos (take 20 (memoized-fetch-repos user))
+        forked-repos (filter :fork repos)
         send-to (partial send-event-fn sse-context)]
     (send-to "message"
              (format "%s has %s forks. Fetching data..."
                      user (count forked-repos)))
-    (send-to "results"
-             (format "<tr width=\"4\"><td>%s</td></tr>" (rand)))
-    #_(->> forked-repos
+    (->> forked-repos
          (mapv (partial fetch-fork-and-send-row send-to user))
          (render-end-msg user)
          (send-to "message"))
