@@ -20,6 +20,7 @@ es.addEventListener('results', function(e) {
 es.addEventListener('end-message', function(e) {
   console.log('PUSH: ' + e.data);
   window.history.pushState({"message": $("#message").html(),
+                            "title": document.title,
                             "results": $("#results").html()},
                            null, e.data);
 });
@@ -38,6 +39,8 @@ $(function() {
     if (e.state) {
       $("#message").html(e.state.message);
       $("#results").html(e.state.results);
+      $("h1").html(e.state.title);
+      document.title = e.state.title;
     }
   });
 
@@ -48,6 +51,8 @@ $(function() {
     $('#message').html('Fetching repositories...');
     $('#user').val('');
     $('tbody').html('');
+    document.title = user + "'s Github Contributions"
+    $('h1').html(document.title);
   };
 
   $("form").on('submit', function(e) {
@@ -68,6 +73,8 @@ $(function() {
     fetchUserContributions(match[1]);
   } else {
     console.log('PUSH: /');
-    window.history.pushState({"message": '', "results": ''}, null, '');
+    window.history.pushState({"message": '', "results": '', "title": $("h1").html()},
+                             null,
+                             '');
   }
 });
