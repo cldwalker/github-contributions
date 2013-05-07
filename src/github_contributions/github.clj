@@ -1,5 +1,6 @@
 (ns github-contributions.github
-  (:require [tentacles.repos :refer [user-repos contributors specific-repo]]
+  (:require [tentacles.repos :refer [user-repos specific-repo]]
+            tentacles.core
             [io.pedestal.service.log :as log]
             [com.github.ragnard.hamelito.hiccup :as haml]
             [clostache.parser :as clostache]))
@@ -34,12 +35,22 @@
 (defn fetch-repos [user]
   (github-api-call user-repos user (assoc (gh-auth) :all-pages true)))
 
-;;; get around tentacles bug
+(defn contributors
+  [user repo opts]
+  (tentacles.core/api-call :get "repos/%s/%s/stats/contributors" [user repo] opts))
+
 (defn fetch-contributors [user repo]
-  (let [cs (github-api-call contributors user repo (gh-auth))]
-    (if (= (last cs) {})
-      (vec (drop-last 1 cs))
-      cs)))
+  (let [cs (github-api-call contributors user repo (gh-auth))
+        _ (prn "CONTRIB" (class cs))]
+    (if (= cs {})
+      (do
+        (log/info :msg "Waiting for github to return a non-202 response...")
+        (Thread/sleep 500)
+        (fetch-contributors user repo))
+      ;;; get around tentacles bug
+      (if (= (last cs) {})
+        (vec (drop-last 1 cs))
+        cs))))
 
 (defn fetch-fork-info [user repo]
   (log/info :msg (format "Fetching fork info for %s/%s" user repo))
@@ -47,14 +58,15 @@
         full-name (get-in! repo-map [:parent :full_name])
         [_ parent-user parent-repo] (re-find #"([^/]+)/([^/]+)" full-name)
         contribs (->> (fetch-contributors parent-user parent-repo)
-                      (sort-by :contributions)
+                      (sort-by :total)
                       reverse
                       (map-indexed (fn [num elem] (assoc elem :num num))))
-        contributor (some #(and (= user (:login %)) %) contribs)]
+        contributor (some #(and (= user (get-in % [:author :login])) %) contribs)
+        _ (prn "FOUND" (class contributor))]
     {:full-name full-name
      :user user
-     :commits (or (:contributions contributor) 0)
-     :tr-class (if (:contributions contributor) "contribution" "no-contribution")
+     :commits (or (:total contributor) 0)
+     :tr-class (if contributor "contribution" "no-contribution")
      :total-contributors (count contribs)
      :contributor-rank (when contributor (inc (:num contributor)))
      :stars (get-in repo-map [:parent :watchers_count])
