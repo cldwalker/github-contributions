@@ -18,7 +18,6 @@ es.addEventListener('results', function(e) {
   $("#results").append(e.data + "\n");
 });
 es.addEventListener('end-message', function(e) {
-  console.log('PUSH: ' + e.data);
   window.history.pushState({"message": $("#message").html(),
                             "title": document.title,
                             "results": $("#results").html()},
@@ -34,7 +33,6 @@ es.onerror = function(e) {
 
 $(function() {
   window.addEventListener("popstate", function(e) {
-    console.log("POP", e.state);
     // guard against initial page load
     if (e.state) {
       $("#message").html(e.state.message);
@@ -74,7 +72,6 @@ $(function() {
     setTimeout(function() {fetchUserContributions(match[1])},
                500);
   } else {
-    console.log('PUSH: /');
     window.history.pushState({"message": '', "results": '', "title": $("h1").html()},
                              null,
                              '');
