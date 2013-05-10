@@ -33,7 +33,7 @@ es.onerror = function(e) {
 
 $(function() {
   window.addEventListener("popstate", function(e) {
-    // guard against initial page load
+    // guard against initial page load in chrome
     if (e.state) {
       $("#message").html(e.state.message);
       $("#results").html(e.state.results);
