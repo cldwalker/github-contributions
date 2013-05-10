@@ -70,7 +70,9 @@ $(function() {
 
   var match;
   if (match = location.pathname.match(/^\/(.+)/)) {
-    fetchUserContributions(match[1]);
+    // Allow time for sse to register
+    setTimeout(function() {fetchUserContributions(match[1])},
+               500);
   } else {
     console.log('PUSH: /');
     window.history.pushState({"message": '', "results": '', "title": $("h1").html()},
