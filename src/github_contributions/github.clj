@@ -9,7 +9,7 @@
   []
   (if-let [auth (System/getenv "GITHUB_AUTH")]
     (if (.contains auth ":") {:auth auth} {:oauth-token auth})
-    (or (throw (ex-info "Set $GITHUB_AUTH to basic auth in order to use github api." {})))))
+    (or (throw (ex-info "Set $GITHUB_AUTH to an oauth token or basic auth in order to use Github's api." {})))))
 
 (defn get-in!
   "Fail fast if no truish value for get-in"
