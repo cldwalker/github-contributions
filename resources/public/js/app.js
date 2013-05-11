@@ -12,24 +12,34 @@ function guid() {
          s4() + '-' + s4() + s4() + s4();
 };
 
+function initEventSource(clientId) {
+  if (typeof EventSource === 'undefined') {
+    alert("Your browser doesn't support html5 server-sent events and will not work properly here. For browsers to use, see http://caniuse.com/#feat=eventsource.")
+    return;
+  }
+
+  var es = new EventSource('/contributions?id='+clientId);
+  es.addEventListener('results', function(e) {
+    $("#results").append(e.data + "\n");
+  });
+  es.addEventListener('end-message', function(e) {
+    window.history.pushState({"message": $("#message").html(),
+                              "title": document.title,
+                              "results": $("#results").html()},
+                             null, e.data);
+  });
+  es.onmessage = function(e) {
+    $('#message').html(e.data + "\n");
+  };
+  es.onerror = function(e) {
+    $('.alert-box').show();
+    $('#error').html(e.data);
+  };
+  return es;
+};
+
 var clientId = guid();
-var es = new EventSource('/contributions?id='+clientId);
-es.addEventListener('results', function(e) {
-  $("#results").append(e.data + "\n");
-});
-es.addEventListener('end-message', function(e) {
-  window.history.pushState({"message": $("#message").html(),
-                            "title": document.title,
-                            "results": $("#results").html()},
-                           null, e.data);
-});
-es.onmessage = function(e) {
-  $('#message').html(e.data + "\n");
-};
-es.onerror = function(e) {
-  $('.alert-box').show();
-  $('#error').html(e.data);
-};
+var es = initEventSource(clientId);
 
 $(function() {
   window.addEventListener("popstate", function(e) {
