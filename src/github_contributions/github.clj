@@ -55,6 +55,7 @@
     {:full-name full-name
      :user user
      :commits (or (:contributions contributor) 0)
+     :commit-word (if (= 1 (:contributions contributor)) "commit" "commits")
      :tr-class (if (:contributions contributor) "contribution" "no-contribution")
      :total-contributors (count contribs)
      :contributor-rank (when contributor (inc (:num contributor)))
