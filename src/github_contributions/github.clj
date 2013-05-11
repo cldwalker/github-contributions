@@ -7,8 +7,9 @@
 ;;; helpers
 (defn gh-auth
   []
-  {:auth (or (System/getenv "GITHUB_AUTH")
-             (throw (ex-info "Set $GITHUB_AUTH to basic auth in order to use github api." {})))})
+  (if-let [auth (System/getenv "GITHUB_AUTH")]
+    (if (.contains auth ":") {:auth auth} {:oauth-token auth})
+    (or (throw (ex-info "Set $GITHUB_AUTH to basic auth in order to use github api." {})))))
 
 (defn get-in!
   "Fail fast if no truish value for get-in"
