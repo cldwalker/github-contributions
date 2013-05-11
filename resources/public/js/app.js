@@ -66,6 +66,11 @@ $(function() {
     e.preventDefault;
   });
 
+  if (!(window.history && window.history.pushState)) {
+    alert("Your browser doesn't support html5 history and may not work properly here. For browsers to use, see http://caniuse.com/#search=history .")
+    return;
+  }
+
   var match;
   if (match = location.pathname.match(/^\/(.+)/)) {
     // Allow time for sse to register
