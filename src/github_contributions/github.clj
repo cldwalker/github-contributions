@@ -6,6 +6,8 @@
 
 ;;; helpers
 (defn gh-auth
+  "Sets github authentication using $GITHUB_AUTH. Its value can be a basic auth user:pass
+or an oauth token."
   []
   (if-let [auth (System/getenv "GITHUB_AUTH")]
     (if (.contains auth ":") {:auth auth} {:oauth-token auth})
@@ -21,8 +23,10 @@
   [m k]
   (or (get m k) (throw (ex-info "No value found for key in map" {:map m :key k}))))
 
-;;; api calls
-(defn- github-api-call [f & args]
+;;; API calls
+(defn- github-api-call
+  "Wraps github api calls to handle unsuccessful responses."
+  [f & args]
   (let [response (apply f args)]
     (if (some #{403 404} [(:status response)])
       (throw (ex-info
@@ -32,17 +36,22 @@
               {:reason :github-client-error :response response}))
       response)))
 
-(defn fetch-repos [user]
+(defn fetch-repos
+  "Fetch all public repositories for a user"
+  [user]
   (github-api-call user-repos user (assoc (gh-auth) :all-pages true)))
 
-;;; get around tentacles bug
-(defn fetch-contributors [user repo]
+(defn fetch-contributors
+  "Wrap around a tentacles bug for the contributors endpoint where an extra {} appears at the end."
+  [user repo]
   (let [cs (github-api-call contributors user repo (gh-auth))]
     (if (= (last cs) {})
       (vec (drop-last 1 cs))
       cs)))
 
-(defn fetch-fork-info [user repo]
+(defn fetch-fork-info
+  "Gathers a fork's contribution stats from fork and contributors api calls."
+  [user repo]
   (log/info :msg (format "Fetching fork info for %s/%s" user repo))
   (let [repo-map (github-api-call specific-repo user repo (gh-auth))
         full-name (get-in! repo-map [:parent :full_name])
@@ -63,10 +72,14 @@
      :stars (get-in repo-map [:parent :watchers_count])
      :desc (get-in repo-map [:parent :description])}))
 
+;;; Cache api calls for maximum reuse. Of course, this cache only lasts
+;;; as long as the app lives.
 (def memoized-fetch-fork-info (memoize fetch-fork-info))
 (def memoized-fetch-repos (memoize fetch-repos))
 
-(defn- rank-ending [num]
+(defn- rank-ending
+  "Adds an approprate string suffix to a number e.g. nd for 2nd."
+  [num]
   (cond
    (and (= \3 (last num)) (not= '(\1 \3) (take-last 2 num))) "rd"
    (and (= \2 (last num)) (not= '(\1 \2) (take-last 2 num))) "nd"
@@ -86,7 +99,9 @@
                  "-")
       :ranking-class (if-not (:contributor-rank fork-map) "hide" "")))))
 
-(defn- render-end-msg [user forks]
+(defn- render-end-msg
+  "Build final message summarizing contributions to a user's forks."
+  [user forks]
   (format
    "<a href=\"https://github.com/%s\">%s</a> has contributed to %s of %s forks."
    user
@@ -99,7 +114,10 @@
     (send-to "results" (render-row fork-map))
     fork-map))
 
-(defn- stream-contributions* [send-event-fn sse-context user]
+(defn- stream-contributions*
+  "Sends 3 different sse events (message, results, end-message) depending on
+what part of the page it's updating."
+  [send-event-fn sse-context user]
   ;; TODO: remove limit
   (let [repos (take 20 (memoized-fetch-repos user))
         forked-repos (filter :fork repos)
@@ -113,7 +131,9 @@
          (send-to "message"))
     (send-to "end-message" user)))
 
-(defn stream-contributions [send-event-fn sse-context user]
+(defn stream-contributions
+  "Streams a user's contributions with a given fn and sse-context."
+  [send-event-fn sse-context user]
   (if user
     (try
       (stream-contributions* send-event-fn sse-context user)

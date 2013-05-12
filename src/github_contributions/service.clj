@@ -18,7 +18,7 @@
 (def ^{:doc "Map of IDs to SSE contexts"} subscribers (atom {}))
 
 (defn contributions-page
-  "Starts sending counter events to client."
+  "Saves sse-context for streaming."
   [sse-context]
   (if-let [id (get-in sse-context [:request :query-params :id])]
     (swap! subscribers assoc id sse-context)
@@ -35,7 +35,9 @@ opening a user url in a new tab."
       (Thread/sleep 500)
       (get @subscribers id))))
 
-(defn stream-contributions-page [request]
+(defn stream-contributions-page
+  "Stream contributions to the given client id."
+  [request]
   (if-let [id (get-in request [:form-params "id"])]
     (if-let [sse-context (get-sse-context id)]
       (stream-contributions sse/send-event sse-context (get-in! request [:form-params "user"]))
@@ -44,7 +46,6 @@ opening a user url in a new tab."
 
 (defroutes routes
   [[["/"
-     ;; Set default interceptors for /about and any other paths under /
      ^:interceptors [(body-params/body-params) bootstrap/html-body]
      ["/contributions" {:get [::contributions (sse/start-event-stream contributions-page)]
                         :post stream-contributions-page}]
