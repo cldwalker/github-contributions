@@ -53,6 +53,7 @@
                       (map-indexed (fn [num elem] (assoc elem :num num))))
         contributor (some #(and (= user (:login %)) %) contribs)]
     {:full-name full-name
+     :fork-name (:full_name repo-map)
      :user user
      :commits (or (:contributions contributor) 0)
      :commit-word (if (= 1 (:contributions contributor)) "commit" "commits")

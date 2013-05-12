@@ -18,7 +18,7 @@ label.user span {
   margin-right: 5px;
 }
 
-span.stars {
+span.stars, span.fork {
   font-size: 90%;
 }
 

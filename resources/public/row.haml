@@ -1,7 +1,12 @@
 %tr(class='{{tr-class}}')
   %td
     %a(href='https://github.com/{{full-name}}') {{full-name}}
-    %span.stars &nbsp;({{stars}} stars)
+    %span.fork
+      &nbsp;(
+      %a(href='https://github.com/{{fork-name}}' title='{{fork-name}}') fork
+      )
+    %span.stars
+      &nbsp;{{stars}} stars
   %td
     %a(href='https://github.com/{{full-name}}/commits?author={{user}}') {{commits}} {{commit-word}}
   %td
