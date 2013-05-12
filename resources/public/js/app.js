@@ -47,7 +47,7 @@ $(function() {
     if (e.state) {
       $("#message").html(e.state.message);
       $("#results").html(e.state.results);
-      $("h1").html(e.state.title);
+      $("h1.title").html(e.state.title);
       document.title = e.state.title;
     }
   });
@@ -60,7 +60,7 @@ $(function() {
     $('#user').val('');
     $('tbody').html('');
     document.title = user + "'s Github Contributions"
-    $('h1').html(document.title);
+    $('h1.title').html(document.title);
   };
 
   $("form").on('submit', function(e) {
@@ -87,7 +87,7 @@ $(function() {
     setTimeout(function() {fetchUserContributions(match[1])},
                500);
   } else {
-    window.history.pushState({"message": '', "results": '', "title": $("h1").html()},
+    window.history.pushState({"message": '', "results": '', "title": $("h1.title").html()},
                              null,
                              '');
   }
