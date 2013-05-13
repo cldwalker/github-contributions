@@ -8,17 +8,9 @@
   (::bootstrap/service-fn (bootstrap/create-servlet service/service)))
 
 (deftest home-page-test
-  (is (=
+  (is (.contains
        (:body (response-for service :get "/"))
-       "Hello World!"))
+       "Contributions on Github"))
   (is (=
        (:headers (response-for service :get "/"))
-       {"Content-Type" "text/html"})))
-
-(deftest about-page-test
-  (is (.contains
-       (:body (response-for service :get "/about"))
-       "Clojure 1.5"))
-  (is (=
-       (:headers (response-for service :get "/about"))
        {"Content-Type" "text/html"})))
