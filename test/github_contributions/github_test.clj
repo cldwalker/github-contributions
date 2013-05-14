@@ -1,9 +1,10 @@
 (ns github-contributions.github-test
   (:require [clojure.test :refer :all]
             [github-contributions.service :as service]
-            [conjure.core :refer :all]
+            [conjure.core :refer [mocking verify-nth-call-args-for]]
             [tentacles.repos :as repos]
             [github-contributions.fixtures :as fixtures]
+            [github-contributions.test-helper :as test-helper]
             [github-contributions.github :as github]))
 
 (defn send-event-fn [& args])
@@ -11,11 +12,13 @@
 
 (defn stream-contributions
   []
-  (github/stream-contributions send-event-fn sse-context "defunkt"))
+  (test-helper/disallow-web-requests!
+   (github/stream-contributions send-event-fn sse-context "defunkt")))
 
 (deftest stream-contributions-receives-403-from-github
   []
-  (with-redefs [repos/user-repos (constantly fixtures/response-403)]
+  (with-redefs [repos/user-repos (constantly fixtures/response-403)
+                github/gh-auth (constantly {})]
     (mocking [send-event-fn]
              (stream-contributions)
              (verify-nth-call-args-for 1 send-event-fn sse-context "error"
@@ -23,7 +26,8 @@
 
 (deftest stream-contributions-receives-404-from-github
   []
-  (with-redefs [repos/user-repos (constantly fixtures/response-404)]
+  (with-redefs [repos/user-repos (constantly fixtures/response-404)
+                github/gh-auth (constantly {})]
     (mocking [send-event-fn]
              (stream-contributions)
              (verify-nth-call-args-for 1 send-event-fn sse-context "error"
@@ -37,7 +41,8 @@
   []
   (with-redefs [repos/user-repos (constantly fixtures/response-user-repos)
                 repos/specific-repo (constantly fixtures/response-specific-repo)
-                repos/contributors (constantly fixtures/response-contributors)]
+                repos/contributors (constantly fixtures/response-contributors)
+                github/gh-auth (constantly {})]
     (mocking [send-event-fn]
              (stream-contributions)
              (verify-nth-call-args-for 1 send-event-fn sse-context "message"
