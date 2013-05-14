@@ -6,7 +6,7 @@ contributions tab, which is limited in scope and time frame.
 This app current only works off of a user's public information. This
 means contributions can't be detected unless a user has a fork for it.
 
-View the app [on heroku](#TODO).
+View the app [on heroku](https://github-contributions.herokuapp.com/).
 
 ## Running the App
 
