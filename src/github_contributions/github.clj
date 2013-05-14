@@ -118,8 +118,7 @@ or an oauth token."
   "Sends 3 different sse events (message, results, end-message) depending on
 what part of the page it's updating."
   [send-event-fn sse-context user]
-  ;; TODO: remove limit
-  (let [repos (take 20 (memoized-fetch-repos user))
+  (let [repos (memoized-fetch-repos user)
         forked-repos (filter :fork repos)
         send-to (partial send-event-fn sse-context)]
     (send-to "message"
