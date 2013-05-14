@@ -7,35 +7,26 @@
             [github-contributions.github :as github]))
 
 (defn send-event-fn [& args])
+(def sse-context {:request {}})
 
 (defn stream-contributions
   []
- (github/stream-contributions send-event-fn))
-
-(defn yo [& args]
-  "yo")
-
-(deftest yo-test
-  (mocking [yo]
-           (yo :first)
-           (yo :second)
-           (verify-nth-call-args-for 1 yo :first)
-           (verify-nth-call-args-for 2 yo :second)))
+  (github/stream-contributions send-event-fn sse-context "defunkt"))
 
 (deftest stream-contributions-receives-403-from-github
   []
   (with-redefs [repos/user-repos (constantly fixtures/response-403)]
     (mocking [send-event-fn]
-             (github/stream-contributions send-event-fn {} "defunkt")
-             (verify-nth-call-args-for 1 send-event-fn {} "error"
+             (stream-contributions)
+             (verify-nth-call-args-for 1 send-event-fn sse-context "error"
                                        "Rate limit has been exceeded for Github's API. Please try again later."))))
 
 (deftest stream-contributions-receives-404-from-github
   []
   (with-redefs [repos/user-repos (constantly fixtures/response-404)]
     (mocking [send-event-fn]
-             (github/stream-contributions send-event-fn {} "defunkt")
-             (verify-nth-call-args-for 1 send-event-fn {} "error"
+             (stream-contributions)
+             (verify-nth-call-args-for 1 send-event-fn sse-context "error"
                                        "Received a 404 from Github. Please try again later."))))
 
 ;; because conjure only supports =
@@ -48,13 +39,14 @@
                 repos/specific-repo (constantly fixtures/response-specific-repo)
                 repos/contributors (constantly fixtures/response-contributors)]
     (mocking [send-event-fn]
-             (github/stream-contributions send-event-fn {} "defunkt")
-             (verify-nth-call-args-for 1 send-event-fn {} "message"
+             (stream-contributions)
+             (verify-nth-call-args-for 1 send-event-fn sse-context "message"
                                        "defunkt has 1 forks. Fetching data...")
-             (verify-nth-call-args-for 2 send-event-fn {} "results" expected-row)
-             (verify-nth-call-args-for 3 send-event-fn {} "message"
+             (verify-nth-call-args-for 2 send-event-fn sse-context "results" expected-row)
+             (verify-nth-call-args-for 3 send-event-fn sse-context "message"
                                        "<a href=\"https://github.com/defunkt\">defunkt</a> has contributed to 1 of 1 forks.")
-             (verify-nth-call-args-for 4 send-event-fn {} "end-message" "defunkt"))))
+             (verify-nth-call-args-for 4 send-event-fn sse-context "end-message" "defunkt"))))
+
 (deftest rank-ending-test
   (are [num ending]
        (is (= ending (github/rank-ending num)))
