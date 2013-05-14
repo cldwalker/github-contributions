@@ -77,7 +77,7 @@ or an oauth token."
 (def memoized-fetch-fork-info (memoize fetch-fork-info))
 (def memoized-fetch-repos (memoize fetch-repos))
 
-(defn- rank-ending
+(defn rank-ending
   "Adds an approprate string suffix to a number e.g. nd for 2nd."
   [num]
   (cond
