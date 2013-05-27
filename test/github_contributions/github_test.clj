@@ -16,7 +16,6 @@
    (github/stream-contributions send-event-fn sse-context "defunkt")))
 
 (deftest stream-contributions-receives-403-from-github
-  []
   (with-redefs [repos/user-repos (constantly fixtures/response-403)
                 github/gh-auth (constantly {})]
     (mocking [send-event-fn]
@@ -25,7 +24,6 @@
                                        "Rate limit has been exceeded for Github's API. Please try again later."))))
 
 (deftest stream-contributions-receives-404-from-github
-  []
   (with-redefs [repos/user-repos (constantly fixtures/response-404)
                 github/gh-auth (constantly {})]
     (mocking [send-event-fn]
@@ -38,7 +36,6 @@
   "<tr class=\"contribution\"><td><a href=\"https://github.com/ajaxorg/ace\">ajaxorg/ace</a><span class=\"fork\">&nbsp;(<a href=\"https://github.com/defunkt/ace\" title=\"defunkt/ace\">fork</a>)</span><span class=\"stars\">&nbsp;5188 stars</span></td><td><a href=\"https://github.com/ajaxorg/ace/commits?author=defunkt\">5 commits</a></td><td><a class=\"ranking \" href=\"https://github.com/ajaxorg/ace/contributors\">1st of 2</a></td><td>Ajax.org Cloud9 Editor</td></tr>")
 
 (deftest stream-contributions-receives-200s-from-github
-  []
   (with-redefs [repos/user-repos (constantly fixtures/response-user-repos)
                 repos/specific-repo (constantly fixtures/response-specific-repo)
                 repos/contributors (constantly fixtures/response-contributors)
