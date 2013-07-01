@@ -78,7 +78,7 @@ or an oauth token."
 (def memoized-fetch-repos (memoize fetch-repos))
 
 (defn rank-ending
-  "Adds an approprate string suffix to a number e.g. nd for 2nd."
+  "Adds an appropriate string suffix to a number e.g. nd for 2nd."
   [num]
   (cond
    (and (= \3 (last num)) (not= '(\1 \3) (take-last 2 num))) "rd"

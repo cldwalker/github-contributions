@@ -23,5 +23,5 @@ This app takes the following environment variables:
 
 * Only works with browsers that support [Server Side Events](http://caniuse.com/#feat=eventsource) and [HTML5 History](http://caniuse.com/#feat=history).
 * In Chrome, if you look up a couple of different users and then enter
-  a direct user url e.g. /defunkt, going backwords and forwards in
+  a direct user url e.g. /defunkt, going backwards and forwards in
   your browser will be wonky.
